@@ -6,35 +6,37 @@ import (
 	"net/http"
 )
 
+// HTTPContext 封装 Handler.ServeHTTP 方法的两个参数
+// 这里是个简单的实现，想要完善一点的，可以实现 context.Context 接口
 type HTTPContext struct {
-	N1resW http.ResponseWriter
-	N1req  *http.Request
+	P1resW http.ResponseWriter
+	P1req  *http.Request
 }
 
-func NewHTTPContext(N1resW http.ResponseWriter, N1req *http.Request) *HTTPContext {
+func NewHTTPContext(p1resW http.ResponseWriter, p1req *http.Request) *HTTPContext {
 	return &HTTPContext{
-		N1resW: N1resW,
-		N1req:  N1req,
+		P1resW: p1resW,
+		P1req:  p1req,
 	}
 }
 
-// ReadJson 读取数据转换为Json
-func (n2c *HTTPContext) ReadJson(data interface{}) error {
-	reqBody, err := io.ReadAll(n2c.N1req.Body)
+// ReadJson 读取数据转换为 json
+func (p1c *HTTPContext) ReadJson(data interface{}) error {
+	reqBody, err := io.ReadAll(p1c.P1req.Body)
 	if nil != err {
 		return err
 	}
 	return json.Unmarshal(reqBody, data)
 }
 
-// WriteJson 写入json 数据
-func (n2c *HTTPContext) WriteJson(status int, data interface{}) error {
-	n2c.N1resW.WriteHeader(status)
+// WriteJson 写入 json 数据
+func (p1c *HTTPContext) WriteJson(status int, data interface{}) error {
+	p1c.P1resW.WriteHeader(status)
 	resJson, err := json.Marshal(data)
 	if nil != err {
 		return err
 	}
-	_, err = n2c.N1resW.Write(resJson)
+	_, err = p1c.P1resW.Write(resJson)
 	if nil != err {
 		return err
 	}
