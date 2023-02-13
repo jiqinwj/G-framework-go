@@ -13,15 +13,29 @@ type ApiJson struct {
 }
 
 func main() {
+
+	//关闭服务
+	p1hshutdown := jiframework.NewHTTPShutdown()
+
 	p1hservice := jiframework.NewHTTPSrevice(
 		"http-service",
+		p1hshutdown.ReqInHandleCountBuilder,
 		jiframework.TestMiddlewareBuilder,
 		jiframework.TimeCostMiddlewareBuilder,
 	)
 
 	httpApi(p1hservice)
-	p1hservice.Start("127.0.0.1", "9502")
+	go p1hservice.Start("127.0.0.1", "9502")
 	fmt.Println("done")
+
+	//信号处理服务关闭
+	jiframework.WaitForShutdown(
+		jiframework.NotifyShutdownToGateWay,
+		p1hshutdown.RejectNewRequestAndWaiting,
+		// 全部请求处理完了，就可以关闭服务了
+		jiframework.ServiceShutDownBuilder(p1hservice),
+	)
+
 }
 
 // httpApi 注册路由和处理方法
@@ -52,8 +66,18 @@ func httpApi(p1hservice jiframework.Service) {
 		_, _ = p1c.P1resW.Write([]byte("response, http.MethodGet, /user/*"))
 	})
 
+	p1hservice.RegisteRoute(http.MethodGet, "/user/:id", func(p1c *jiframework.HTTPContext) {
+		p1c.P1resW.WriteHeader(http.StatusOK)
+		_, _ = p1c.P1resW.Write([]byte("response, http.MethodGet, /user/" + p1c.PathParams["id"]))
+	})
+
 	p1hservice.RegisteRoute(http.MethodGet, "/user/order", func(p1c *jiframework.HTTPContext) {
 		p1c.P1resW.WriteHeader(http.StatusOK)
 		_, _ = p1c.P1resW.Write([]byte("response, http.MethodGet, /user/order"))
+	})
+
+	p1hservice.RegisteRoute(http.MethodGet, "/user/order/:id/detail", func(p1c *jiframework.HTTPContext) {
+		p1c.P1resW.WriteHeader(http.StatusOK)
+		_, _ = p1c.P1resW.Write([]byte("response, http.MethodGet, /user/order/" + p1c.PathParams["id"] + "/detail"))
 	})
 }

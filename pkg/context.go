@@ -11,13 +11,22 @@ import (
 type HTTPContext struct {
 	P1resW http.ResponseWriter
 	P1req  *http.Request
+	//路径参数
+	PathParams map[string]string
 }
 
-func NewHTTPContext(p1resW http.ResponseWriter, p1req *http.Request) *HTTPContext {
+func NewHTTPContext() *HTTPContext {
 	return &HTTPContext{
-		P1resW: p1resW,
-		P1req:  p1req,
+		// 一般路径参数都是一个
+		PathParams: make(map[string]string, 1),
 	}
+}
+
+// Reset 复用时用新的数据重置
+func (p1c *HTTPContext) Reset(p1resW http.ResponseWriter, p1req *http.Request) {
+	p1c.P1resW = p1resW
+	p1c.P1req = p1req
+	p1c.PathParams = make(map[string]string, 1)
 }
 
 // ReadJson 读取数据转换为 json

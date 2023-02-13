@@ -1,6 +1,8 @@
 ## Readme
 
-G-Framework-Go HTTP-V1-Frame。🚀🚀🚀🚀🚀
+
+## V2 Version
+G-Framework-Go HTTP-V2-Frame。🚀🚀🚀🚀🚀
 
 Function directory：
 - Middleware
