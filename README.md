@@ -1,6 +1,6 @@
 ## Readme
 
-Ji-Framework-Go HTTP-Frame。🚀🚀🚀🚀🚀
+G-Framework-Go HTTP-Frame。🚀🚀🚀🚀🚀
 
 Function directory：
 - Middleware
