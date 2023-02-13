@@ -79,6 +79,7 @@ func (p1h *HTTPHandlerTree) RegisteRoute(method string, pattern string, hhFunc H
 	// 清理路由前后的 `/`，然后把路由分段
 	t1pattern := strings.Trim(pattern, "/")
 	arr1path := strings.Split(t1pattern, "/")
+	fmt.Printf("路由数据:%v \n", arr1path)
 
 	// 指针指向当前操作的结点
 	p1nowNode := p1h.p1root
@@ -91,6 +92,7 @@ func (p1h *HTTPHandlerTree) RegisteRoute(method string, pattern string, hhFunc H
 			continue
 		}
 		// 如果找不到子结点，说明需要创建新的子树
+		fmt.Printf("创建子树节点：%v \n", arr1path[index:])
 		p1h.newSubTree(p1nowNode, arr1path[index:], hhFunc)
 		break
 	}
