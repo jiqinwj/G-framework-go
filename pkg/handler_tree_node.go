@@ -77,7 +77,7 @@ func newAnyNode(path string) *node {
 func newParamNode(path string) *node {
 	paramName := path[1:]
 	return &node{
-		nodeType: c1nodeTypeAny,
+		nodeType: c1nodeTypeParam,
 		pattren:  path,
 		rmFunc: func(t1path string, p1c *HTTPContext) bool {
 			// 路径参数，不包括 '*'

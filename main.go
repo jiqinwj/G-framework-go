@@ -66,14 +66,14 @@ func httpApi(p1hservice jiframework.Service) {
 		_, _ = p1c.P1resW.Write([]byte("response, http.MethodGet, /user/*"))
 	})
 
+	p1hservice.RegisteRoute(http.MethodGet, "/user/ss", func(p1c *jiframework.HTTPContext) {
+		p1c.P1resW.WriteHeader(http.StatusOK)
+		_, _ = p1c.P1resW.Write([]byte("response, http.MethodGet, /user/order"))
+	})
+
 	p1hservice.RegisteRoute(http.MethodGet, "/user/:id", func(p1c *jiframework.HTTPContext) {
 		p1c.P1resW.WriteHeader(http.StatusOK)
 		_, _ = p1c.P1resW.Write([]byte("response, http.MethodGet, /user/" + p1c.PathParams["id"]))
-	})
-
-	p1hservice.RegisteRoute(http.MethodGet, "/user/order", func(p1c *jiframework.HTTPContext) {
-		p1c.P1resW.WriteHeader(http.StatusOK)
-		_, _ = p1c.P1resW.Write([]byte("response, http.MethodGet, /user/order"))
 	})
 
 	p1hservice.RegisteRoute(http.MethodGet, "/user/order/:id/detail", func(p1c *jiframework.HTTPContext) {
