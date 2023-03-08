@@ -26,6 +26,16 @@ type HTTPHandler struct {
 	isRunning bool
 }
 
+func (p7this *HTTPHandler) ServeHTTP(i9w http.ResponseWriter, p7r *http.Request) {
+	// 从内存池里获取 HTTPContext
+	p7ctx := p7this.ctxPool.Get().(*HTTPContext)
+	// 归还资源到资源池
+	defer func() {
+		p7ctx.R
+	}()
+
+}
+
 //var _ HTTPHandlerInterface = &HTTPHandler{}
 
 func NewHTTPHandler() *HTTPHandler {

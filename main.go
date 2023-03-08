@@ -33,6 +33,6 @@ func makeOpenService() *pkg.HTTPService {
 	p7h.Get("/hello/*", f4handler, middleware.TestMiddleware("/hello/*"))
 
 	//启动服务
-	p7s := pkg.NewHTTPService("", "", p7h)
+	p7s := pkg.NewHTTPService("9510", "127.0.0.1:9510", p7h)
 
 }
