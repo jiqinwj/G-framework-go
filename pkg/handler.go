@@ -1,19 +1,58 @@
 package pkg
 
-// HTTPHandler 请求处理接口
-type HTTPHandler interface {
-	// HandlerHTTP 请求处理的入口方法
-	// 所有请求都先进入这个方法进行路由匹配，然后调用路由对应的处理方法
-	HandlerHTTP(c *HTTPContext)
-	// 请求处理接口需要能够注册路由
-	HTTPRoute
+import (
+	"net/http"
+	"sync"
+)
+
+// 路由对应的处理方法的定义
+type HTTPHandlerFunc func(p7ctx *HTTPContext)
+
+// 核心处理逻辑的接口定义
+type HTTPHandlerInterface interface {
+	http.Handler
+	RouteInterface
+	MiddlewareInterface
 }
 
-// HTTPRoute 路由接口
-type HTTPRoute interface {
-	// RegisteRoute 注册路由。method HTTP 方法；pattern 路由；
-	RegisteRoute(method string, pattern string, hhFunc HTTPHandlerFunc) error
+// HTTPHandler 核心处理逻辑
+type HTTPHandler struct {
+	router
+	// 全局中间件
+	s5f4middleware []HTTPMiddleware
+	// 内存池 复用 HTTPContext
+	ctxPool sync.Pool
+	// isRunning 服务是否正在运行
+	isRunning bool
 }
 
-// HTTPHandlerFunc 路由对应的处理方法
-type HTTPHandlerFunc func(c *HTTPContext)
+//var _ HTTPHandlerInterface = &HTTPHandler{}
+
+func NewHTTPHandler() *HTTPHandler {
+	return &HTTPHandler{
+		router: newRouter(),
+		ctxPool: sync.Pool{
+			New: func() interface{} {
+				return NewHTTPContext()
+			},
+		},
+		isRunning: true,
+	}
+}
+
+// 增加中间件
+func (p7this *HTTPHandler) AddMiddleware(s5f4mw ...HTTPMiddleware) {
+	if nil == p7this.s5f4middleware {
+		p7this.s5f4middleware = make([]HTTPMiddleware, 0, len(s5f4mw))
+	}
+	p7this.s5f4middleware = append(p7this.s5f4middleware, s5f4mw...)
+}
+
+// Get 装饰器模式 包装addroute
+func (p7this *HTTPHandler) Get(path string, f4h HTTPHandlerFunc, s5f4mw ...HTTPMiddleware) {
+	p7this.router.addRoute(http.MethodGet, path, f4h, s5f4mw...)
+}
+
+func (p7this *HTTPHandler) Post(path string, f4h HTTPHandlerFunc, s5f4mw ...HTTPMiddleware) {
+	p7this.router.addRoute(http.MethodPost, path, f4h, s5f4mw...)
+}

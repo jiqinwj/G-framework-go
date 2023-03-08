@@ -1,44 +1,37 @@
 package pkg
 
 import (
-	"encoding/json"
-	"io"
+	"fmt"
 	"net/http"
 )
 
-// HTTPContext 封装 Handler.ServeHTTP 方法的两个参数
-// 这里是个简单的实现，想要完善一点的，可以实现 context.Context 接口
+// 自定义请求上下文 (注意和context.Context 的概念区分开)
 type HTTPContext struct {
-	P1resW http.ResponseWriter
-	P1req  *http.Request
+	//ServerHTTP 的 http.ResponseWriter
+	I9writer http.ResponseWriter
+	// ServerHTTP 的 *http.Request
+	P7request *http.Request
+
+	// 命中的路由结点
+	p7routingNode *routingNode
+
+	// 提取到的路径参数
+	M3pathParam map[string]string
+
+	// 因为 http.ResponseWriter.Write 是流，只能写一次 （其实内部 就是linux c 的write() 类似）
+	// 如果在应用层调用了，那么在中间件里面记录的响应日志和追加数据就无法实现
+	// 这里的方案是，等到所有的处理流程都结束了，再调用 http.ResponseWriter.Writer
+	RespData []byte
 }
 
-func NewHTTPContext(p1resW http.ResponseWriter, p1req *http.Request) *HTTPContext {
+func NewHTTPContext() *HTTPContext {
 	return &HTTPContext{
-		P1resW: p1resW,
-		P1req:  p1req,
+		// 一般情况下，路径参数就一个
+		M3pathParam: make(map[string]string, 1),
 	}
 }
 
-// ReadJson 读取数据转换为 json
-func (p1c *HTTPContext) ReadJson(data interface{}) error {
-	reqBody, err := io.ReadAll(p1c.P1req.Body)
-	if nil != err {
-		return err
-	}
-	return json.Unmarshal(reqBody, data)
-}
-
-// WriteJson 写入 json 数据
-func (p1c *HTTPContext) WriteJson(status int, data interface{}) error {
-	p1c.P1resW.WriteHeader(status)
-	resJson, err := json.Marshal(data)
-	if nil != err {
-		return err
-	}
-	_, err = p1c.P1resW.Write(resJson)
-	if nil != err {
-		return err
-	}
-	return nil
+// GetRoutingInfo  获取命中的路由结点的信息
+func (this HTTPContext) GetRoutingInfo() string {
+	return fmt.Sprintf("nodeType:%d;routing path:%s;", this.p7routingNode.nodeType, this.p7routingNode.path)
 }
