@@ -60,6 +60,46 @@ type routingNode struct {
 	s5f4middlewareCache []HTTPMiddleware
 }
 
+// 服务启动前，查询并缓存结点需要用到的所有中间件
+func (p7this *routingNode) makeMiddlewareCache(s5f4mw []HTTPMiddleware) {
+	t4s5f4mw := make([]HTTPMiddleware, 0, len(s5f4mw))
+	// 上一层结点的中间件
+	if nil != s5f4mw {
+		t4s5f4mw = append(t4s5f4mw, s5f4mw...)
+	}
+
+	// 如果有通配符结点，则其他结点需要把通配符结点上的中间件也加上
+	if nil != p7this.p7anyChild {
+		p7this.p7anyChild.makeMiddlewareCache(t4s5f4mw)
+		if nil != p7this.p7anyChild.s5f4middleware {
+			t4s5f4mw = append(t4s5f4mw, p7this.p7anyChild.s5f4middleware...)
+		}
+	}
+
+	// 添加这个结点上的中间件
+	if nil != p7this.s5f4middleware {
+		t4s5f4mw = append(t4s5f4mw, p7this.s5f4middleware...)
+	}
+
+	// 如果这个结点有处理方法，那么这个结点不是中间结点而是有效的路由结点，需要缓存中间件结果
+	if nil != p7this.f4handler {
+		p7this.s5f4middlewareCache = make([]HTTPMiddleware, 0, len(t4s5f4mw))
+		p7this.s5f4middlewareCache = append(p7this.s5f4middlewareCache, t4s5f4mw...)
+	}
+
+	// 处理其余类型的子结点
+	// 处理其余类型的子结点
+	if nil != p7this.p7regexpChild {
+		p7this.p7regexpChild.makeMiddlewareCache(t4s5f4mw)
+	}
+	if nil != p7this.p7paramChild {
+		p7this.p7paramChild.makeMiddlewareCache(t4s5f4mw)
+	}
+	for _, p7childNode := range p7this.m3routingTree {
+		p7childNode.makeMiddlewareCache(t4s5f4mw)
+	}
+}
+
 // 构建路由树时，查询子节点
 func (p7this *routingNode) findChild(part string) *routingNode {
 	// 找静态路由
@@ -165,4 +205,27 @@ func (p7this *routingNode) checkChild(part string) {
 			panic(StrParamChildExist)
 		}
 	}
+}
+
+// 查询路由时，匹配子结点
+func (p7this *routingNode) matchChild(part string) *routingNode {
+	// 这里的查询优先级可以根据需要进行调整
+	// 先查询静态路由
+	if nil != p7this.m3routingTree {
+		p7node, ok := p7this.m3routingTree[part]
+		if ok {
+			return p7node
+		}
+	}
+
+	// 然后依次查询，正则表达式路由，路径参数路由，通配符路由
+	if nil != p7this.p7regexpChild {
+		return p7this.p7regexpChild
+	} else if nil != p7this.p7paramChild {
+		return p7this.p7paramChild
+	} else if nil != p7this.p7anyChild {
+		return p7this.p7anyChild
+	}
+	return nil
+
 }

@@ -33,6 +33,13 @@ func newRouter() router {
 	}
 }
 
+func (p7this *router) middlewareCache() {
+	// 遍历每一个路由树
+	for _, p7node := range p7this.m3routingTree {
+		p7node.makeMiddlewareCache(nil)
+	}
+}
+
 func (p7this *router) addRoute(method string, path string, f4h HTTPHandlerFunc, s5f4mw ...HTTPMiddleware) {
 
 	//规则控制住 中间件不能让用户那么随意注册
@@ -94,6 +101,59 @@ func (p7this *router) addRoute(method string, path string, f4h HTTPHandlerFunc, 
 	p7node.s5f4middleware = s5f4mw
 }
 
-func (p7this *router) findRoute {
+func (p7this *router) findRoute(method string, path string) *routeInfo {
+	p7node, ok := p7this.m3routingTree[method]
+	if !ok {
+		return nil
+	}
 
+	if "/" == path {
+		return &routeInfo{
+			p7node: p7node,
+		}
+	}
+
+	p7ri := &routeInfo{}
+	s5path := strings.Split(path[1:], "/")
+	for _, part := range s5path {
+		p7node = p7node.matchChild(part)
+		if nil == p7node {
+			return nil
+		}
+		if p7node.nodeType == nodeTypeRegexp {
+			s5res := p7node.p7regexp.FindStringSubmatch(part)
+			if nil != s5res {
+				p7ri.addPathParam(p7node.paramName, s5res[0])
+			} else {
+				p7ri.addPathParam(p7node.paramName, "")
+			}
+		} else if p7node.nodeType == nodeTypeParam {
+			p7ri.addPathParam(p7node.paramName, part)
+		} else if p7node.nodeType == nodeTypeAny {
+			if nil == p7node.m3routingTree && nil == p7node.p7regexpChild &&
+				nil == p7node.p7paramChild && nil == p7node.p7anyChild {
+				break
+			}
+		}
+	}
+	p7ri.p7node = p7node
+
+	return p7ri
+
+}
+
+// 添加路径参数
+func (p7this *routeInfo) addPathParam(k string, v string) {
+	if nil == p7this.m3pathParam {
+		p7this.m3pathParam = map[string]string{k: v}
+	}
+	p7this.m3pathParam[k] = v
+}
+
+// routeInfo 理由查询结果
+type routeInfo struct {
+	// 命中的路由结点
+	p7node *routingNode
+	// 提取出来的路径参数
+	m3pathParam map[string]string
 }

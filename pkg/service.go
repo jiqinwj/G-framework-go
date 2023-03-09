@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"context"
+	"log"
 	"net/http"
 )
 
@@ -39,4 +40,30 @@ func NewHTTPService(name string, addr string, p7h *HTTPHandler) *HTTPService {
 		p7handler: p7h,
 		isRunning: true,
 	}
+}
+
+func (p7this *HTTPService) Start() error {
+	log.Printf("服务 %s 启动，监听 %s 端口。\r\n", p7this.name, p7this.p7server.Addr)
+	//缓存路由中间件
+	p7this.p7handler.router.middlewareCache()
+	return p7this.p7server.ListenAndServe()
+
+}
+
+func (p7this *HTTPService) Stop() {
+	log.Printf("服务 %s 停止服务\r\n", p7this.name)
+	p7this.isRunning = false
+	p7this.p7handler.isRunning = false
+}
+
+func (p7this *HTTPService) ShutDown(ctx context.Context) error {
+	log.Printf("服务 %s 关闭\r\n", p7this.name)
+	return p7this.p7server.Shutdown(ctx)
+}
+
+func (p7this *HTTPService) AddShutdownCallback(s5f4cb ...ShutdownCallback) {
+	if nil == p7this.s5f4shutdownCallback {
+		p7this.s5f4shutdownCallback = make([]ShutdownCallback, 0, len(s5f4cb))
+	}
+	p7this.s5f4shutdownCallback = append(p7this.s5f4shutdownCallback, s5f4cb...)
 }
