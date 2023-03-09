@@ -17,7 +17,9 @@ type RouteInterface interface {
 	// 添加路由
 	addRoute(method string, path string, f4h HTTPHandlerFunc, s5mw ...HTTPMiddleware)
 	// 查找路由
-	findRoute(method string, path string)
+	findRoute(method string, path string) *routeInfo
+	// 服务启动前，将中间件扫描好，缓存到路由结点
+	middlewareCache()
 }
 
 // 路由器
@@ -25,12 +27,6 @@ type router struct {
 	// routingTree 路由树，路由按请求方式分成多个路由树
 	//map:Get =>Get 的路由树，Post =>
 	m3routingTree map[string]*routingNode
-}
-
-func newRouter() router {
-	return router{
-		m3routingTree: map[string]*routingNode{},
-	}
 }
 
 func (p7this *router) middlewareCache() {
@@ -140,6 +136,12 @@ func (p7this *router) findRoute(method string, path string) *routeInfo {
 
 	return p7ri
 
+}
+
+func newRouter() router {
+	return router{
+		m3routingTree: map[string]*routingNode{},
+	}
 }
 
 // 添加路径参数

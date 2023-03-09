@@ -155,6 +155,24 @@ func (p7this *routingNode) createChild(part string, path string) *routingNode {
 				p7regexp:  regexp.MustCompile(part[t4regIndex1+1 : t4regIndex2]),
 			}
 			return p7this.p7regexpChild
+		} else {
+			if nil != p7this.p7anyChild {
+				panic(StrParamChildClashWithAnyChild)
+			}
+			if nil != p7this.p7paramChild {
+				panic(StrParamChildExist)
+			}
+			if nil != p7this.p7regexpChild {
+				panic(StrParamChildClashWithRegexpChild)
+			}
+
+			p7this.p7paramChild = &routingNode{
+				nodeType:  nodeTypeParam,
+				part:      part,
+				path:      path,
+				paramName: part[1:],
+			}
+			return p7this.p7paramChild
 		}
 	}
 
