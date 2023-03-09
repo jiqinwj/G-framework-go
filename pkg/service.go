@@ -11,22 +11,23 @@ type HTTPServiceInterface interface {
 	// Start 启动服务
 	Start(addr string) error
 	// Stop 停止服务
+	Stop()
 	// ShutDown 服务关闭
 	ShutDown(ctx context.Context) error
 	ShutdownCallbackInterface
 }
 
-// 核心服务
+// HTTPService 核心服务
 type HTTPService struct {
 	// name 服务名
 	name string
-	// 核心处理逻辑
+	// p7server 核心处理逻辑
 	p7server *http.Server
-	// 核心处理逻辑
+	// p7handler 核心处理逻辑
 	p7handler *HTTPHandler
-	// 服务是否正在运行
+	// isRunning 服务是否正在运行
 	isRunning bool
-	// 关闭服务时，需要执行的回调方法
+	// s5f4shutdownCallback 关闭服务时，需要执行的回调方法
 	s5f4shutdownCallback []ShutdownCallback
 }
 
@@ -44,10 +45,8 @@ func NewHTTPService(name string, addr string, p7h *HTTPHandler) *HTTPService {
 
 func (p7this *HTTPService) Start() error {
 	log.Printf("服务 %s 启动，监听 %s 端口。\r\n", p7this.name, p7this.p7server.Addr)
-	//缓存路由中间件
 	p7this.p7handler.router.middlewareCache()
 	return p7this.p7server.ListenAndServe()
-
 }
 
 func (p7this *HTTPService) Stop() {

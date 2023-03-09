@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// option 设计模式
+// ServiceManagerOption Option 设计模式
 type ServiceManagerOption func(*ServiceManager)
 
 type ServiceManager struct {
@@ -33,7 +33,7 @@ func NewServiceManager(s5p7hs []*HTTPService, s5f4option ...ServiceManagerOption
 		shutdownCallbackTimeOut: 3 * time.Second,
 	}
 
-	// 依次执行option
+	// 依次执行 Option
 	for _, f4o := range s5f4option {
 		f4o(p7sm)
 	}
@@ -42,8 +42,8 @@ func NewServiceManager(s5p7hs []*HTTPService, s5f4option ...ServiceManagerOption
 }
 
 func (p7this *ServiceManager) Start() {
-	//启动服务
-	log.Println("服务启动中.....")
+	// 启动服务
+	log.Println("服务启动中。。。")
 	for _, p7s := range p7this.s5p7HTTPService {
 		t4p7s := p7s
 		go func() {
@@ -56,15 +56,15 @@ func (p7this *ServiceManager) Start() {
 			}
 		}()
 	}
-	log.Println("服务启动完成。。。")
+	log.Println("服务启动完成。")
+
 	// 监听 ctrl+c 信号
 	c4signal := make(chan os.Signal, 2)
 	signal.Notify(c4signal, os.Interrupt)
 	select {
 	case <-c4signal:
-		log.Printf("接收到关闭信号，开始关闭服务，限制 %d 秒内完成。。。。", p7this.shutdownWaitTime/time.Second)
-
-		//再次监听 ctrl+C 信号
+		log.Printf("接收到关闭信号，开始关闭服务，限制 %d 秒内完成。。。\r\n", p7this.shutdownTimeOut/time.Second)
+		// 再次监听 ctrl+c 信号
 		go func() {
 			select {
 			case <-c4signal:
@@ -73,7 +73,7 @@ func (p7this *ServiceManager) Start() {
 			}
 		}()
 		time.AfterFunc(p7this.shutdownTimeOut, func() {
-			log.Println("优雅关闭超时，服务直接退出")
+			log.Println("优雅关闭超时，服务直接退出。")
 			os.Exit(1)
 		})
 		p7this.Shutdown()
@@ -84,18 +84,18 @@ func (p7this *ServiceManager) Shutdown() {
 	ctx, cancel := context.WithTimeout(context.Background(), p7this.shutdownTimeOut)
 	defer cancel()
 
-	log.Println("停止接收新请求。。")
+	log.Println("停止接收新请求。")
 	for _, p7hs := range p7this.s5p7HTTPService {
 		p7hs.Stop()
 	}
 
-	log.Printf("等待正在执行的请求结束，等待%d 秒。。。。", p7this.shutdownWaitTime/time.Second)
+	log.Printf("等待正在执行的请求结束，等待 %d 秒。。。", p7this.shutdownWaitTime/time.Second)
 	time.Sleep(p7this.shutdownWaitTime)
 
-	log.Println("开始关闭子服务。。。。")
+	log.Println("开始关闭子服务。。。")
 	wg := sync.WaitGroup{}
 	for _, p7hs := range p7this.s5p7HTTPService {
-		log.Printf("关闭子服务 %s....", p7hs.name)
+		log.Printf("关闭子服务 %s 。。。", p7hs.name)
 		t4p7s := p7hs
 		wg.Add(1)
 		go func() {
@@ -105,9 +105,9 @@ func (p7this *ServiceManager) Shutdown() {
 	}
 	wg.Wait()
 
-	log.Println("开始执行子服务的关闭回调。。。。")
+	log.Println("开始执行子服务的关闭回调。。。")
 	for _, p7hs := range p7this.s5p7HTTPService {
-		log.Printf("执行子服务 %s 的关闭回调，限制 %d 秒内完成。。。。", p7hs.name, p7this.shutdownCallbackTimeOut/time.Second)
+		log.Printf("执行子服务 %s 的关闭回调，限制 %d 秒内完成。。。", p7hs.name, p7this.shutdownCallbackTimeOut/time.Second)
 		for _, f4cb := range p7hs.s5f4shutdownCallback {
 			t4f4cb := f4cb
 			wg.Add(1)
@@ -121,11 +121,10 @@ func (p7this *ServiceManager) Shutdown() {
 	}
 	wg.Wait()
 
-	log.Println("服务关闭完成。。")
-
+	log.Println("服务关闭完成。")
 }
 
-func SetShutdownTimeoutOption(t time.Duration) ServiceManagerOption {
+func SetShutdownTimeOutOption(t time.Duration) ServiceManagerOption {
 	return func(p7sm *ServiceManager) {
 		p7sm.shutdownTimeOut = t
 	}
