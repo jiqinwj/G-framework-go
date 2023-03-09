@@ -2,58 +2,94 @@ package main
 
 import (
 	"fmt"
-	jiframework "ji-framework-go/pkg"
+	"ji-framework-go/middleware"
+	"ji-framework-go/pkg"
+	"ji-framework-go/shutdown"
 	"net/http"
+	"time"
 )
 
-type ApiJson struct {
-	JsonInt    int    `json:"json_int"`
-	JsonString string `json:"json_string"`
-	JsonText   string `json:"json_text"`
+func main() {
+	p7os := makeOpenService()
+	p7as := makeAdminService()
+	p7sm := pkg.NewServiceManager(
+		[]*pkg.HTTPService{p7os, p7as},
+		pkg.SetShutdownTimeOutOption(20*time.Second),
+		pkg.SetShutdownWaitTime(10*time.Second),
+		pkg.SetShutdownCallbackTimeOut(5*time.Second),
+	)
+	p7sm.Start()
 }
 
-func main() {
-	p1hservice := jiframework.NewHTTPSrevice(
-		"http-service",
-		jiframework.TestMiddlewareBuilder,
-		jiframework.TimeCostMiddlewareBuilder,
+func makeOpenService() *pkg.HTTPService {
+	p7h := pkg.NewHTTPHandler()
+
+	p7h.AddMiddleware(
+		middleware.RecoveryMiddleware(),
+		middleware.ReqBodyMiddleware(),
+		middleware.LogMiddleware(),
 	)
 
-	httpApi(p1hservice)
-	p1hservice.Start("127.0.0.1", "9502")
-	fmt.Println("done")
+	f4handler := func(p7ctx *pkg.HTTPContext) {
+		routingInfo := p7ctx.GetRoutingInfo()
+		pathParam := "pathParam:"
+		for key, val := range p7ctx.M3pathParam {
+			pathParam += fmt.Sprintf("%s=%s;", key, val)
+		}
+		p7ctx.RespData = append(p7ctx.RespData, []byte(routingInfo+pathParam)...)
+	}
+
+	p7h.Get("/", f4handler)
+
+	p7h.Get("/hello", f4handler)
+	p7h.Get("/hello/world", f4handler, middleware.TestMiddleware("/hello"), middleware.TestMiddleware("/world"))
+	p7h.Get("/hello/*", f4handler, middleware.TestMiddleware("/hello/*"))
+
+	p7h.Get("/order", f4handler)
+	p7h.Get("/order/list/:size/:page", f4handler)
+	p7h.Get("/order/:id/detail", f4handler)
+	p7h.Post("/order/create", f4handler)
+	p7h.Post("/order/:id/delete", f4handler)
+
+	p7s := pkg.NewHTTPService("9510", "127.0.0.1:9510", p7h)
+
+	p7s.AddShutdownCallback(
+		shutdown.CacheShutdownCallback,
+		shutdown.CountShutdownCallback,
+	)
+
+	return p7s
 }
 
-// httpApi 注册路由和处理方法
-func httpApi(p1hservice jiframework.Service) {
-	p1hservice.RegisteRoute(http.MethodGet, "/api/test", func(p1c *jiframework.HTTPContext) {
-		p1c.P1resW.WriteHeader(http.StatusOK)
-		_, _ = p1c.P1resW.Write([]byte("response, http.MethodGet, /api/test"))
-	})
+func makeAdminService() *pkg.HTTPService {
+	p7h := pkg.NewHTTPHandler()
 
-	p1hservice.RegisteRoute(http.MethodPost, "/api/post_json", func(p1c *jiframework.HTTPContext) {
-		reqData := &ApiJson{}
-		err := p1c.ReadJson(reqData)
-		if nil != err {
-			p1c.WriteJson(http.StatusUnprocessableEntity, err.Error())
-			return
+	p7h.AddMiddleware(
+		middleware.RecoveryMiddleware(),
+		middleware.ReqBodyMiddleware(),
+		middleware.LogMiddleware(),
+	)
+
+	f4handler := func(p7ctx *pkg.HTTPContext) {
+		routingInfo := p7ctx.GetRoutingInfo()
+		pathParam := "pathParam:"
+		for key, val := range p7ctx.M3pathParam {
+			pathParam += fmt.Sprintf("%s=%s;", key, val)
 		}
-		reqData.JsonText = "response, http.MethodPost, /api/json"
-		p1c.WriteJson(http.StatusOK, reqData)
-	})
+		p7ctx.RespData = append(p7ctx.RespData, []byte(routingInfo+pathParam)...)
+	}
 
-	p1hservice.RegisteRoute(http.MethodGet, "/user/info", func(p1c *jiframework.HTTPContext) {
-		p1c.P1resW.WriteHeader(http.StatusOK)
-		_, _ = p1c.P1resW.Write([]byte("response, http.MethodGet, /user/info/1"))
-	})
+	p7h.Group(
+		"/admin",
+		[]pkg.HTTPMiddleware{middleware.TestMiddleware("admin")},
+		[]pkg.RouteData{
+			{http.MethodGet, "/", f4handler},
+			{http.MethodGet, "/list/:size/:page", f4handler},
+			{http.MethodGet, "/:id/detail", f4handler},
+			{http.MethodPost, "/create", f4handler},
+			{http.MethodPost, "/:id/delete", f4handler},
+		},
+	)
 
-	p1hservice.RegisteRoute(http.MethodGet, "/user/*", func(p1c *jiframework.HTTPContext) {
-		p1c.P1resW.WriteHeader(http.StatusOK)
-		_, _ = p1c.P1resW.Write([]byte("response, http.MethodGet, /user/*"))
-	})
-
-	p1hservice.RegisteRoute(http.MethodGet, "/user/order", func(p1c *jiframework.HTTPContext) {
-		p1c.P1resW.WriteHeader(http.StatusOK)
-		_, _ = p1c.P1resW.Write([]byte("response, http.MethodGet, /user/order"))
-	})
+	return pkg.NewHTTPService("9511", "127.0.0.1:9511", p7h)
 }
