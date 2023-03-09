@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"sync"
 )
@@ -39,8 +41,36 @@ func (p7this *HTTPHandler) ServeHTTP(i9w http.ResponseWriter, p7r *http.Request)
 
 	// 倒过来组装，先组装的在里层，里层的后执行
 	// 最里层应该是找路由然后执行业务代码
-	//t4chain := p7this.do
+	t4chain := p7this.doServerHTTP
+	for i := len(p7this.s5f4middleware) - 1; i >= 0; i-- {
+		t4chain = p7this.s5f4middleware[i](t4chain)
+	}
+	//写入响应数据这个中间件应该有框架开发者自行处理
+	// 它是最后一个环节，应该在最外层
+	t4m := FlashRespMiddleware()
+	t4chain = t4m(t4chain)
+	t4chain(p7ctx)
 
+}
+
+// 写入响应数据
+func FlashRespMiddleware() HTTPMiddleware {
+	return func(next HTTPHandlerFunc) HTTPHandlerFunc {
+		return func(p7ctx *HTTPContext) {
+			next(p7ctx)
+			flashResp(p7ctx)
+		}
+	}
+}
+
+func flashResp(p7ctx *HTTPContext) {
+	if p7ctx.RespStatusCode > 0 {
+		p7ctx.I9writer.WriteHeader(p7ctx.RespStatusCode)
+	}
+	_, err := p7ctx.I9writer.Write(p7ctx.RespData)
+	if err != nil {
+		log.Fatalln("flashResp failed", err)
+	}
 }
 
 func (p7this *HTTPHandler) doServerHTTP(p7ctx *HTTPContext) {
@@ -50,10 +80,23 @@ func (p7this *HTTPHandler) doServerHTTP(p7ctx *HTTPContext) {
 		_, _ = p7ctx.I9writer.Write([]byte("服务已关闭"))
 		return
 	}
-	//p7ri := p7this.findRoute(p7ctx.P7request.Method, p7ctx.P7request.URL.Path)
+	p7ri := p7this.findRoute(p7ctx.P7request.Method, p7ctx.P7request.URL.Path)
 	// 如果找不到对应的路由结点或者路由结点上没有处理方法就返回 404
-	//if nil== p7ri || nil == p7ri
+	if nil == p7ri || nil == p7ri.p7node || nil == p7ri.p7node.f4handler {
+		p7ctx.I9writer.WriteHeader(http.StatusNotFound)
+		_, _ = p7ctx.I9writer.Write([]byte(fmt.Sprintf("Not Found:%s %s\r\n", p7ctx.P7request.Method, p7ctx.P7request.URL.Path)))
+		return
+	}
 
+	// 这里可以把匹配结果存下来
+	p7ctx.M3pathParam = p7ri.m3pathParam
+	p7ctx.p7routingNode = p7ri.p7node
+	// 这里是同样的套路，处理路由上的中间件，最后执行业务代码
+	t4chain := p7ri.p7node.f4handler
+	for i := len(p7ri.p7node.s5f4middlewareCache) - 1; i >= 0; i-- {
+		t4chain = p7ri.p7node.s5f4middlewareCache[i](t4chain)
+	}
+	t4chain(p7ctx)
 }
 
 //var _ HTTPHandlerInterface = &HTTPHandler{}

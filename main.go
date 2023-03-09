@@ -6,11 +6,22 @@ import (
 	"ji-framework-go/pkg"
 	"ji-framework-go/shutdown"
 	"net/http"
+	"time"
 )
 
 func main() {
 	p7os := makeOpenService()
 	p7as := makeAdminService()
+
+	//多服务管理
+	p7sm := pkg.NewServiceManager(
+		[]*pkg.HTTPService{p7os, p7as},
+		pkg.SetShutdownTimeoutOption(20*time.Second),
+		pkg.SetShutdownWaitTime(10*time.Second),
+		pkg.SetShutdownCallbackTimeOut(5*time.Second),
+	)
+	//启动多个服务
+	p7sm.Start()
 }
 
 func makeOpenService() *pkg.HTTPService {
