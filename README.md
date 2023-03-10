@@ -9,5 +9,9 @@ Function directory：
 - 服务进程管理器
 - 优雅退出、退出时的回调方法
 
-## Architecture Diagram
+## 中间件图解
+![img_2.png](img_2.png)
+## 路由树图解
 ![img_1.png](img_1.png)
+
+
